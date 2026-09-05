@@ -4,11 +4,12 @@ import Home from './pages/Home';
 import Explore from './pages/Explore';
 import IssueDetails from './pages/IssueDetails';
 import GitGuide from './pages/GitGuide';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 import ScrollToTop from './components/ScrollToTop';
 import RouteMeta from './components/RouteMeta';
-import Chatbot from './components/Chatbot';
 
 function App() {
   return (
@@ -33,11 +34,12 @@ function App() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/issue/:issueId" element={<IssueDetails />} />
               <Route path="/git-guide" element={<GitGuide />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />
-          <Chatbot />
         </div>
       </div>
     </Router>

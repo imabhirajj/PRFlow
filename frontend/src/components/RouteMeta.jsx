@@ -6,6 +6,8 @@ const getPageTitle = (pathname) => {
   if (pathname === '/') return `Home | ${PROJECT_NAME}`;
   if (pathname === '/explore') return `Explore Issues | ${PROJECT_NAME}`;
   if (pathname === '/git-guide') return `Git Guide | ${PROJECT_NAME}`;
+  if (pathname === '/login') return `Sign In | ${PROJECT_NAME}`;
+  if (pathname === '/signup') return `Create Account | ${PROJECT_NAME}`;
   if (pathname.startsWith('/issue/')) return `Issue Details | ${PROJECT_NAME}`;
   return `Page Not Found | ${PROJECT_NAME}`;
 };

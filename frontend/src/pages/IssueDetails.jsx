@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ExternalLink, BookOpen, GitBranch, Rocket, CheckCircle2, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+
 function getRecommendation(score) {
   if (score >= 8) {
     return {
@@ -61,6 +62,7 @@ export default function IssueDetails() {
   const issue = state?.issue;
   const [checkedSteps, setCheckedSteps] = useState([]);
   const [checkedChecklistItems, setCheckedChecklistItems] = useState([]);
+  const [startingContribution, setStartingContribution] = useState(false);
 
   const firstPrChecklist = [
     'Read README',
@@ -111,6 +113,41 @@ export default function IssueDetails() {
     .some((label) => label.toLowerCase() === 'good first issue');
   const difficultyLevel = getDifficultyLevel(issue.beginnerScore);
   const repoActivitySummary = getActivitySummary(issue.updatedAt);
+
+  const handleStartContribution = async () => {
+  try {
+    setStartingContribution(true);
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://localhost:5000/api/progress",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          issueTitle: issue.issueTitle,
+          repository: issue.repoName,
+          issueUrl: issue.html_url,
+          status: "Started"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(data);
+
+  } catch (err) {
+    console.error(err);
+
+  } finally {
+    setStartingContribution(false);
+  }
+};
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -345,6 +382,15 @@ export default function IssueDetails() {
       </section>
 
       <div className="flex flex-col sm:flex-row gap-3">
+      <button
+  onClick={handleStartContribution}
+  disabled={startingContribution}
+  className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold bg-primary text-white hover:opacity-90 transition disabled:opacity-50"
+>
+  {startingContribution
+    ? "Starting..."
+    : "Start Contribution 🚀"}
+</button>
         <a
           href={issue.html_url}
           target="_blank"

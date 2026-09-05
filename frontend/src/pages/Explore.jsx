@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Compass, AlertCircle, Loader2 } from 'lucide-react';
 import IssueCard from '../components/IssueCard';
 import SkillSelector from '../components/SkillSelector';
-import SearchComponent from '../components/ui/animated-glowing-search-bar';
 import { fetchIssues } from '../services/githubApi';
 
 export default function Explore() {
@@ -194,10 +193,6 @@ export default function Explore() {
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight mb-6 md:mb-8">
             Explore <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Open Issues</span>
           </h1>
-
-          <div className="mb-8 relative z-50">
-            <SearchComponent />
-          </div>
           
           <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto font-medium mb-8">
             Browse through curated open-source issues that match your skills. 
@@ -322,7 +317,7 @@ export default function Explore() {
         )}
 
         {/* State Management */}
-        <div className="min-h-[400px] w-full">
+        <div className="min-h-100 w-full">
           <AnimatePresence mode="wait">
             {loading && (
               <motion.div 

@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(247,147,26,0.1)]">
-      <nav className="flex justify-between items-center w-full px-6 md:px-12 h-20 max-w-[1400px] mx-auto">
+      <nav className="flex justify-between items-center w-full px-6 md:px-12 h-20 max-w-350 mx-auto">
         <Link to="/" className="flex items-center gap-2 group transition-transform hover:scale-105">
           <GitPullRequest className="w-7 h-7 text-orange-500 group-hover:text-orange-400 transition-colors" />
           <div className="flex items-center tracking-tighter">
@@ -47,14 +47,28 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-4">
+          <Link 
+            to="/login" 
+            className={`font-data-mono text-xs tracking-widest uppercase transition-colors px-3 py-2 rounded-lg ${
+              isActive('/login') ? 'text-orange-500 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            Sign In
+          </Link>
+          <Link 
+            to="/signup" 
+            className="bitcoin-gradient px-5 py-2 rounded-full text-black font-bold uppercase text-xs tracking-widest scale-95 active:scale-90 transition-transform duration-150 orange-glow inline-block"
+          >
+            Sign Up
+          </Link>
           <a 
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noreferrer"
-            className="bitcoin-gradient px-6 py-2 rounded-full text-black font-bold uppercase text-xs tracking-widest scale-95 active:scale-90 transition-transform duration-150 orange-glow inline-block"
+            className="border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full text-white/90 hover:text-white font-medium uppercase text-xs tracking-widest transition-all inline-block"
           >
-            Start on GitHub
+            GitHub
           </a>
         </div>
 
@@ -82,7 +96,9 @@ export default function Navbar() {
               {[
                 { name: 'Home', path: '/' },
                 { name: 'Explore', path: '/explore' },
-                { name: 'Git Guide', path: '/git-guide' }
+                { name: 'Git Guide', path: '/git-guide' },
+                { name: 'Sign In', path: '/login' },
+                { name: 'Create Account', path: '/signup' }
               ].map((item) => (
                 <Link
                   key={item.name}
@@ -97,13 +113,20 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              <div className="pt-6 flex flex-col gap-4">
+              <div className="pt-4 flex flex-col gap-3">
+                <Link 
+                  to="/signup"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full text-center bitcoin-gradient px-6 py-3 rounded-full text-black font-bold uppercase text-xs tracking-widest orange-glow"
+                >
+                  Get Started Free
+                </Link>
                 <a 
                   href={GITHUB_REPO_URL}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setIsOpen(false)}
-                  className="w-full text-center bitcoin-gradient px-6 py-3 rounded-full text-black font-bold uppercase text-xs tracking-widest orange-glow"
+                  className="w-full text-center border border-white/15 bg-white/5 px-6 py-2.5 rounded-full text-white font-medium uppercase text-xs tracking-widest"
                 >
                   Start on GitHub
                 </a>
