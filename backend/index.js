@@ -70,8 +70,16 @@ app.get("/protected",authMiddleware,(req,res) => {
     });
 })
 
+const mongoose = require('mongoose');
+
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    const isDbConnected = mongoose.connection.readyState === 1;
+    res.status(200).json({
+        status: 'ok',
+        dbConnected: isDbConnected,
+        dbState: mongoose.connection.readyState,
+        timestamp: new Date().toISOString()
+    });
 });
 
 process.on('uncaughtException', (err) => {
