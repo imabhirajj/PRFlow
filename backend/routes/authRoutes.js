@@ -171,12 +171,14 @@ router.get(
         passport.authenticate('github', { session: false }, (err, user, info) => {
             if (err) {
                 console.error('[GitHub OAuth Callback Error]:', err);
-                return res.redirect(`${clientUrl}/login?error=oauth_failed`);
+                const errorDetail = err.message || (typeof err === 'string' ? err : 'oauth_failed');
+                return res.redirect(`${clientUrl}/login?error=${encodeURIComponent(errorDetail)}`);
             }
 
             if (!user) {
-                console.warn('[GitHub OAuth Callback]: User authentication failed');
-                return res.redirect(`${clientUrl}/login?error=user_not_found`);
+                console.warn('[GitHub OAuth Callback]: User authentication failed', info);
+                const infoDetail = (info && info.message) || 'user_not_found';
+                return res.redirect(`${clientUrl}/login?error=${encodeURIComponent(infoDetail)}`);
             }
 
             const token = jwt.sign(

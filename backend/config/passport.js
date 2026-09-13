@@ -25,7 +25,12 @@ const getCallbackURL = () => {
 
 const callbackURL = getCallbackURL();
 
-if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+const cleanEnv = (val) => (val || '').trim().replace(/^["']|["']$/g, '');
+
+const clientID = cleanEnv(process.env.GITHUB_CLIENT_ID);
+const clientSecret = cleanEnv(process.env.GITHUB_CLIENT_SECRET);
+
+if (!clientID || !clientSecret) {
     console.warn('[GitHub OAuth] Warning: GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is not configured in environment variables.');
 }
 
@@ -34,8 +39,8 @@ console.log(`[GitHub OAuth] Configured Callback URL: ${callbackURL}`);
 passport.use(
     new GitHubStrategy(
         {
-            clientID: process.env.GITHUB_CLIENT_ID || 'missing_client_id',
-            clientSecret: process.env.GITHUB_CLIENT_SECRET || 'missing_client_secret',
+            clientID: clientID || 'missing_client_id',
+            clientSecret: clientSecret || 'missing_client_secret',
             callbackURL: callbackURL
         },
         async (accessToken, refreshToken, profile, done) => {
