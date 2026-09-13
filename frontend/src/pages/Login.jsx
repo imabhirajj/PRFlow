@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -35,6 +35,22 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const errorParam = params.get('error');
+    if (errorParam === 'oauth_failed') {
+      setDemoStatus({
+        type: 'error',
+        message: 'GitHub authentication failed. Please check your GitHub permissions or try again.'
+      });
+    } else if (errorParam) {
+      setDemoStatus({
+        type: 'error',
+        message: `Sign-in error: ${errorParam}`
+      });
+    }
+  }, [location.search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

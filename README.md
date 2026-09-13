@@ -130,10 +130,43 @@ npm run dev
 cd ../frontend
 npm install
 ```
+Create a `.env` file in the `frontend/` directory:
+```env
+VITE_API_URL=http://localhost:5000
+```
 Run development server:
 ```bash
 npm run dev
 ```
+
+---
+
+## 🌐 Production Deployment Configuration
+
+### 1. Render (Backend) Environment Variables
+Configure these in **Render Dashboard -> Environment**:
+| Variable | Production Value | Description |
+|---|---|---|
+| `PORT` | `5000` | Port for Express service |
+| `NODE_ENV` | `production` | Production environment flag |
+| `MONGO_URI` | `mongodb+srv://...` | MongoDB Atlas connection string |
+| `JWT_SECRET` | `<your-jwt-secret>` | Secret key for JWT token signing |
+| `CLIENT_URL` | `https://prflow.vercel.app` | Frontend production URL |
+| `GITHUB_CLIENT_ID` | `<your-github-client-id>` | GitHub OAuth App Client ID |
+| `GITHUB_CLIENT_SECRET` | `<your-github-client-secret>` | GitHub OAuth App Client Secret |
+| `GITHUB_CALLBACK_URL` | `https://prflow-backend.onrender.com/api/auth/github/callback` | OAuth callback on Render |
+
+### 2. Vercel (Frontend) Environment Variables
+Configure these in **Vercel Dashboard -> Settings -> Environment Variables**:
+| Variable | Production Value | Description |
+|---|---|---|
+| `VITE_API_URL` | `https://prflow-backend.onrender.com` | Production backend API base URL |
+
+### 3. GitHub Developer Settings (OAuth App)
+Navigate to **GitHub -> Settings -> Developer Settings -> OAuth Apps**:
+* **Application name:** `PRFlow`
+* **Homepage URL:** `https://prflow.vercel.app`
+* **Authorization callback URL:** `https://prflow-backend.onrender.com/api/auth/github/callback`
 
 ---
 

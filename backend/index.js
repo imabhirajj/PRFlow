@@ -11,7 +11,34 @@ const passport = require('./config/passport');
 
 const app = express();
 
-app.use(cors());
+// Enable reverse proxy trust (critical for Render HTTPS termination & OAuth callbacks)
+app.set('trust proxy', 1);
+
+// Allowed origins for CORS (Vercel production, preview deployments, local dev)
+const allowedOrigins = [
+  'https://prflow.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.startsWith('http://localhost:')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(passport.initialize());
 app.use('/api/auth', authRoutes);

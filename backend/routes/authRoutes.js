@@ -136,7 +136,24 @@ router.get('/profile', authMiddleware, async (req, res) => {
     }
 });
 
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const getClientUrl = () => {
+    const envClient = process.env.CLIENT_URL;
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+
+    if (envClient) {
+        // Prevent accidental localhost redirect in production
+        if (isProd && envClient.includes('localhost')) {
+            return 'https://prflow.vercel.app';
+        }
+        return envClient.replace(/\/+$/, '');
+    }
+
+    if (isProd) {
+        return 'https://prflow.vercel.app';
+    }
+
+    return 'http://localhost:5173';
+};
 
 // GITHUB LOGIN
 router.get(
@@ -149,24 +166,33 @@ router.get(
 // GITHUB CALLBACK
 router.get(
     '/github/callback',
-    passport.authenticate('github', {
-        session: false,
-        failureRedirect: `${clientUrl}/login`
-    }),
-    (req, res) => {
-        const token = jwt.sign(
-            {
-                userId: req.user._id
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: '7d'
+    (req, res, next) => {
+        const clientUrl = getClientUrl();
+        passport.authenticate('github', { session: false }, (err, user, info) => {
+            if (err) {
+                console.error('[GitHub OAuth Callback Error]:', err);
+                return res.redirect(`${clientUrl}/login?error=oauth_failed`);
             }
-        );
 
-        res.redirect(
-            `${clientUrl}/github-success?token=${token}`
-        );
+            if (!user) {
+                console.warn('[GitHub OAuth Callback]: User authentication failed');
+                return res.redirect(`${clientUrl}/login?error=user_not_found`);
+            }
+
+            const token = jwt.sign(
+                {
+                    userId: user._id
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: '7d'
+                }
+            );
+
+            return res.redirect(
+                `${clientUrl}/github-success?token=${token}`
+            );
+        })(req, res, next);
     }
 );
 
