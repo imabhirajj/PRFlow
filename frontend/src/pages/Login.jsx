@@ -1,6 +1,5 @@
-/* eslint-disable no-unused-vars */
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   GitPullRequest, 
@@ -13,6 +12,8 @@ import {
   CheckCircle2, 
   ArrowLeft 
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { API_ENDPOINTS } from '../config/api';
 
 const GithubIcon = ({ className = "w-5 h-5" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -31,7 +32,11 @@ export default function Login() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotStatus, setForgotStatus] = useState(false);
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setDemoStatus({
@@ -41,20 +46,59 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true);
-    setDemoStatus(null);
+    try {
+      setIsLoading(true);
+      setDemoStatus(null);
 
-    // Mock UI delay to showcase interactive experience without backend/API
-    setTimeout(() => {
-      setIsLoading(false);
-      setDemoStatus({
-        type: 'success',
-        message: 'Demo UI: Login action simulated successfully! (Frontend-only mode)'
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
       });
-    }, 1000);
+
+      const data = await response.json();
+
+      if (!response.ok || !data.token) {
+        setDemoStatus({
+          type: "error",
+          message: data.message || "Invalid credentials. Please try again."
+        });
+        return;
+      }
+
+      await login(data.token, data.user);
+
+      setDemoStatus({
+        type: "success",
+        message: `${data.message || "Login Successful!"} Redirecting...`
+      });
+
+      const destination = location.state?.from?.pathname || '/profile';
+      setTimeout(() => {
+        navigate(destination, { replace: true });
+      }, 700);
+
+    } catch (error) {
+      console.error(error);
+      setDemoStatus({
+        type: "error",
+        message: "Cannot connect to server. Please ensure the backend is running."
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOAuthClick = (provider) => {
+    if (provider === 'GitHub') {
+      window.location.href = API_ENDPOINTS.AUTH.GITHUB;
+      return;
+    }
     setDemoStatus({
       type: 'info',
       message: `Demo UI: ${provider} sign-in button clicked (Frontend-only mode).`

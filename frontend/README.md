@@ -12,19 +12,15 @@ PRFlow is a beginner-friendly platform that helps developers find their first op
 https://prflow.vercel.app/
 
 ## 🛠 Tech Stack
-- React
-- Vite
-- JavaScript
-- CSS
+- React 19 + Vite
+- Tailwind CSS v4
+- Framer Motion
+- Lucide React
 
-## ⚠️ Current Limitations
-- Frontend-only (no backend yet)
-- Chatbot is basic
+## 🔗 Architecture & Backend
+PRFlow is powered by a Node.js + Express + MongoDB backend with JWT and GitHub OAuth 2.0 authentication, handling personalized contribution roadmaps and live status tracking.
 
-## 🚀 Future Improvements
-- GitHub API integration
-- Advanced filtering
-- Backend support
+For full project documentation, API endpoints, and system architecture, see the root [README.md](../README.md).
 
 ## 🤝 Contributing
 Feel free to explore and contribute!

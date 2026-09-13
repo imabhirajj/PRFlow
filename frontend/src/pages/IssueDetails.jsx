@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { ExternalLink, BookOpen, GitBranch, Rocket, CheckCircle2, Sparkles } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { ExternalLink, BookOpen, GitBranch, Rocket, CheckCircle2, Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { API_ENDPOINTS } from '../config/api';
 
 
 function getRecommendation(score) {
@@ -44,25 +46,48 @@ function getActivitySummary(updatedAt) {
     return 'Recent activity is unknown.';
   }
 
-  const daysSinceUpdate = Math.floor(
-    (Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const updatedDate = new Date(updatedAt);
+  const now = new Date();
+  const diffDays = Math.floor((now - updatedDate) / (1000 * 60 * 60 * 24));
 
-  if (daysSinceUpdate <= 7) {
-    return 'Very active repo (updated within the last week).';
+  if (diffDays <= 7) {
+    return `Updated ${diffDays === 0 ? 'today' : `${diffDays} days ago`}. High activity.`;
   }
-  if (daysSinceUpdate <= 30) {
-    return 'Active repo (updated within the last month).';
+
+  if (diffDays <= 30) {
+    return `Updated ${diffDays} days ago. Moderate activity.`;
   }
-  return 'Less recent activity (updated over a month ago).';
+
+  return `Updated ${diffDays} days ago. Low activity.`;
 }
 
 export default function IssueDetails() {
   const { state } = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, token } = useAuth();
+
   const issue = state?.issue;
   const [checkedSteps, setCheckedSteps] = useState([]);
   const [checkedChecklistItems, setCheckedChecklistItems] = useState([]);
   const [startingContribution, setStartingContribution] = useState(false);
+  const [isAlreadyTracked, setIsAlreadyTracked] = useState(false);
+  const [feedbackToast, setFeedbackToast] = useState(null);
+
+  useEffect(() => {
+    if (!token || !issue?.html_url) return;
+    fetch(API_ENDPOINTS.PROGRESS.BASE, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.progress) {
+          const found = data.progress.some(p => p.issueUrl === issue.html_url);
+          setIsAlreadyTracked(found);
+        }
+      })
+      .catch(err => console.warn('Could not check tracking status:', err));
+  }, [token, issue?.html_url]);
 
   const firstPrChecklist = [
     'Read README',
@@ -115,39 +140,54 @@ export default function IssueDetails() {
   const repoActivitySummary = getActivitySummary(issue.updatedAt);
 
   const handleStartContribution = async () => {
-  try {
-    setStartingContribution(true);
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
 
-    const token = localStorage.getItem("token");
+    try {
+      setStartingContribution(true);
+      const response = await fetch(
+        API_ENDPOINTS.PROGRESS.BASE,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            issueTitle: issue.issueTitle,
+            repository: issue.repoName,
+            issueUrl: issue.html_url,
+            status: "Started"
+          })
+        }
+      );
 
-    const response = await fetch(
-      "http://localhost:5000/api/progress",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          issueTitle: issue.issueTitle,
-          repository: issue.repoName,
-          issueUrl: issue.html_url,
-          status: "Started"
-        })
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsAlreadyTracked(true);
+        setFeedbackToast({
+          type: 'success',
+          message: data.message || 'Contribution added to your dashboard!'
+        });
+      } else {
+        setFeedbackToast({
+          type: 'error',
+          message: data.message || 'Failed to start contribution.'
+        });
       }
-    );
-
-    const data = await response.json();
-
-    console.log(data);
-
-  } catch (err) {
-    console.error(err);
-
-  } finally {
-    setStartingContribution(false);
-  }
-};
+    } catch (err) {
+      console.error(err);
+      setFeedbackToast({
+        type: 'error',
+        message: 'Cannot connect to server. Please try again later.'
+      });
+    } finally {
+      setStartingContribution(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -381,16 +421,61 @@ export default function IssueDetails() {
         </ul>
       </section>
 
+      {feedbackToast && (
+        <div className={`mb-6 p-4 rounded-xl border text-sm font-data-mono flex items-center justify-between gap-3 ${
+          feedbackToast.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            {feedbackToast.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 shrink-0" />
+            )}
+            <span>{feedbackToast.message}</span>
+          </div>
+          {feedbackToast.type === 'success' && (
+            <Link
+              to="/profile"
+              className="text-xs uppercase underline tracking-wider font-bold text-emerald-300 hover:text-emerald-200"
+            >
+              Open Dashboard &rarr;
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-3">
-      <button
-  onClick={handleStartContribution}
-  disabled={startingContribution}
-  className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold bg-primary text-white hover:opacity-90 transition disabled:opacity-50"
->
-  {startingContribution
-    ? "Starting..."
-    : "Start Contribution 🚀"}
-</button>
+        {isAlreadyTracked ? (
+          <>
+            <div className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-data-mono text-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Currently Tracking
+            </div>
+            <Link
+              to="/profile"
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold bg-orange-500 text-black hover:bg-orange-400 transition cursor-pointer"
+            >
+              View in Dashboard
+            </Link>
+          </>
+        ) : !isAuthenticated ? (
+          <button
+            onClick={() => navigate('/login', { state: { from: location } })}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold bg-orange-500 text-black hover:bg-orange-400 transition cursor-pointer"
+          >
+            Please Log In to Track
+          </button>
+        ) : (
+          <button
+            onClick={handleStartContribution}
+            disabled={startingContribution}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold bg-orange-500 text-black hover:bg-orange-400 transition disabled:opacity-50 cursor-pointer"
+          >
+            {startingContribution ? "Saving..." : "Start Contribution"}
+          </button>
+        )}
         <a
           href={issue.html_url}
           target="_blank"

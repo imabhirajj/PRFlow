@@ -1,19 +1,22 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, GitPullRequest } from 'lucide-react';
+import { Menu, X, GitPullRequest, User, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { GITHUB_REPO_URL } from '../config/site';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(247,147,26,0.1)]">
@@ -48,20 +51,43 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <Link 
-            to="/login" 
-            className={`font-data-mono text-xs tracking-widest uppercase transition-colors px-3 py-2 rounded-lg ${
-              isActive('/login') ? 'text-orange-500 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Sign In
-          </Link>
-          <Link 
-            to="/signup" 
-            className="bitcoin-gradient px-5 py-2 rounded-full text-black font-bold uppercase text-xs tracking-widest scale-95 active:scale-90 transition-transform duration-150 orange-glow inline-block"
-          >
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <Link 
+                to="/profile" 
+                className={`font-data-mono text-xs tracking-widest uppercase transition-colors px-3 py-2 rounded-lg flex items-center gap-2 ${
+                  isActive('/profile') ? 'text-orange-500 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <User className="w-4 h-4 text-orange-500" />
+                <span>{user.name}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full text-white/90 hover:text-white font-medium uppercase text-xs tracking-widest transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link 
+                to="/login" 
+                className={`font-data-mono text-xs tracking-widest uppercase transition-colors px-3 py-2 rounded-lg ${
+                  isActive('/login') ? 'text-orange-500 bg-orange-500/10' : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                Sign In
+              </Link>
+              <Link 
+                to="/signup" 
+                className="bitcoin-gradient px-5 py-2 rounded-full text-black font-bold uppercase text-xs tracking-widest scale-95 active:scale-90 transition-transform duration-150 orange-glow inline-block"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
           <a 
             href={GITHUB_REPO_URL}
             target="_blank"
@@ -97,8 +123,12 @@ export default function Navbar() {
                 { name: 'Home', path: '/' },
                 { name: 'Explore', path: '/explore' },
                 { name: 'Git Guide', path: '/git-guide' },
-                { name: 'Sign In', path: '/login' },
-                { name: 'Create Account', path: '/signup' }
+                ...(user
+                  ? [{ name: `Profile (${user.name})`, path: '/profile' }]
+                  : [
+                      { name: 'Sign In', path: '/login' },
+                      { name: 'Create Account', path: '/signup' }
+                    ])
               ].map((item) => (
                 <Link
                   key={item.name}
@@ -114,13 +144,25 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="pt-4 flex flex-col gap-3">
-                <Link 
-                  to="/signup"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full text-center bitcoin-gradient px-6 py-3 rounded-full text-black font-bold uppercase text-xs tracking-widest orange-glow"
-                >
-                  Get Started Free
-                </Link>
+                {user ? (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-center border border-rose-500/30 bg-rose-500/10 text-rose-400 px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link 
+                    to="/signup"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full text-center bitcoin-gradient px-6 py-3 rounded-full text-black font-bold uppercase text-xs tracking-widest orange-glow"
+                  >
+                    Get Started Free
+                  </Link>
+                )}
                 <a 
                   href={GITHUB_REPO_URL}
                   target="_blank"

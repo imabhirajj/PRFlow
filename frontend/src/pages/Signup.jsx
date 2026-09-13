@@ -1,6 +1,5 @@
-/* eslint-disable no-unused-vars */
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   GitPullRequest, 
@@ -15,6 +14,7 @@ import {
   ArrowLeft, 
   Check 
 } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 const GithubIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -32,6 +32,8 @@ export default function Signup() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [demoStatus, setDemoStatus] = useState(null);
+
+  const navigate = useNavigate();
 
   // Password strength calculation purely for UI feedback
   const passwordCriteria = useMemo(() => {
@@ -65,12 +67,13 @@ export default function Signup() {
     return password && confirmPassword && password === confirmPassword;
   }, [password, confirmPassword]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!agreeTerms) {
       setDemoStatus({
         type: 'error',
-        message: 'Please agree to the Terms of Service & Privacy Policy to continue.'
+        message: 'Please agree to the Terms of Service & Privacy Policy.'
       });
       return;
     }
@@ -78,25 +81,66 @@ export default function Signup() {
     if (password !== confirmPassword) {
       setDemoStatus({
         type: 'error',
-        message: 'Passwords do not match. Please verify and try again.'
+        message: 'Passwords do not match.'
       });
       return;
     }
 
-    setIsLoading(true);
-    setDemoStatus(null);
+    try {
+      setIsLoading(true);
+      setDemoStatus(null);
 
-    // Simulated UI delay for mock demonstration
-    setTimeout(() => {
-      setIsLoading(false);
+      const response = await fetch(
+        API_ENDPOINTS.AUTH.SIGNUP,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || response.status !== 201) {
+        setDemoStatus({
+          type: "error",
+          message: data.message || "Signup failed. Please try again."
+        });
+        return;
+      }
+
       setDemoStatus({
-        type: 'success',
-        message: 'Demo UI: Account creation simulated successfully! (Frontend-only mode)'
+        type: "success",
+        message: `${data.message || "Account created successfully!"} Redirecting to login...`
       });
-    }, 1200);
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1200);
+
+    } catch (error) {
+      console.error(error);
+
+      setDemoStatus({
+        type: "error",
+        message: "Cannot connect to server. Please ensure the backend is running."
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOAuthClick = (provider) => {
+    if (provider === 'GitHub') {
+      window.location.href = API_ENDPOINTS.AUTH.GITHUB;
+      return;
+    }
     setDemoStatus({
       type: 'info',
       message: `Demo UI: ${provider} sign-up initiated (Frontend-only mode).`

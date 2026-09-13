@@ -34,4 +34,7 @@ const progressSchema = new mongoose.Schema(
   }
 );
 
+// Enforce unique issue tracking per user at database level
+progressSchema.index({ user: 1, issueUrl: 1 }, { unique: true });
+
 module.exports = mongoose.model("Progress", progressSchema);

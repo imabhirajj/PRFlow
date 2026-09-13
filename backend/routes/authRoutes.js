@@ -2,6 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/authMiddleware');
+const passport = require('passport');
+const GitHubStrategy = require('passport-github2').Strategy;
 
 const router = express.Router();
 
@@ -10,34 +13,40 @@ const router = express.Router();
 router.post('/signup', async (req, res) => {
     const { name, email, password } = req.body;
 
+    if (!name || !email || !password) {
+        return res.status(400).json({
+            message: 'Name, email, and password are required.'
+        });
+    }
+
     try {
-        const existingUser = await User.findOne({ email: email });
+        const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (existingUser) {
-            return res.json({
-                message: 'Already registered!'
+            return res.status(409).json({
+                message: 'An account with this email already exists!'
             });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
-            name: name,
-            email: email,
+            name: name.trim(),
+            email: email.toLowerCase().trim(),
             password: hashedPassword
         });
 
         await newUser.save();
 
         res.status(201).json({
-            message: 'User registered!'
+            message: 'User registered successfully!'
         });
 
     } catch (err) {
-        console.log(err);
+        console.error('Signup error:', err);
 
         res.status(500).json({
-            message: 'Error while signup'
+            message: 'Error while registering user'
         });
     }
 });
@@ -47,12 +56,18 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({
+            message: 'Email and password are required.'
+        });
+    }
+
     try {
-        const existingUser = await User.findOne({ email: email });
+        const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!existingUser) {
-            return res.json({
-                message: 'You are not registered'
+            return res.status(404).json({
+                message: 'No account found with this email. Please sign up.'
             });
         }
 
@@ -62,8 +77,8 @@ router.post('/login', async (req, res) => {
         );
 
         if (!isPasswordValid) {
-            return res.json({
-                message: 'Invalid password'
+            return res.status(401).json({
+                message: 'Invalid password. Please try again.'
             });
         }
 
@@ -77,13 +92,19 @@ router.post('/login', async (req, res) => {
             }
         );
 
-        res.json({
+        res.status(200).json({
             message: 'Login Successful',
-            token: token
+            token: token,
+            user: {
+                _id: existingUser._id,
+                name: existingUser.name,
+                email: existingUser.email,
+                createdAt: existingUser.createdAt
+            }
         });
 
     } catch (err) {
-        console.log(err);
+        console.error('Login error:', err);
 
         res.status(500).json({
             message: 'Error while login'
@@ -92,12 +113,61 @@ router.post('/login', async (req, res) => {
 });
 
 
-// PROFILE
-router.get('/profile', async (req, res) => {
-    res.json({
-        message: 'Profile route'
-    });
+router.get('/profile', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found'
+            });
+        }
+
+        res.status(200).json({
+            user
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            message: 'Server error'
+        });
+    }
 });
 
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+// GITHUB LOGIN
+router.get(
+    '/github',
+    passport.authenticate('github', {
+        scope: ['user:email']
+    })
+);
+
+// GITHUB CALLBACK
+router.get(
+    '/github/callback',
+    passport.authenticate('github', {
+        session: false,
+        failureRedirect: `${clientUrl}/login`
+    }),
+    (req, res) => {
+        const token = jwt.sign(
+            {
+                userId: req.user._id
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: '7d'
+            }
+        );
+
+        res.redirect(
+            `${clientUrl}/github-success?token=${token}`
+        );
+    }
+);
 
 module.exports = router;
