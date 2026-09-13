@@ -110,15 +110,8 @@ export default function Login() {
     }
   };
 
-  const handleOAuthClick = (provider) => {
-    if (provider === 'GitHub') {
-      window.location.href = API_ENDPOINTS.AUTH.GITHUB;
-      return;
-    }
-    setDemoStatus({
-      type: 'info',
-      message: `Demo UI: ${provider} sign-in button clicked (Frontend-only mode).`
-    });
+  const handleGithubLogin = () => {
+    window.location.href = API_ENDPOINTS.AUTH.GITHUB;
   };
 
   const handleForgotSubmit = (e) => {
@@ -187,40 +180,15 @@ export default function Login() {
           </p>
         </div>
 
-        {/* OAuth Buttons */}
-        <div className="flex flex-col gap-3 mb-6">
+        {/* OAuth Button */}
+        <div className="mb-6">
           <button
             type="button"
-            onClick={() => handleOAuthClick('GitHub')}
+            onClick={handleGithubLogin}
             className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/25 text-white font-medium text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
             <GithubIcon className="w-5 h-5 text-white" />
             <span>Continue with GitHub</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOAuthClick('Google')}
-            className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/25 text-white font-medium text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
-              />
-              <path
-                fill="#4285F4"
-                d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4L1.6 7c-.8 1.6-1.3 3.4-1.3 5.3s.5 3.7 1.3 5.3l3.7-2.9z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 16C3.5 19.8 7.4 23 12 23z"
-              />
-            </svg>
-            <span>Continue with Google</span>
           </button>
         </div>
 
