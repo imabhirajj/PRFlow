@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require("cors");
-const connectDB = require('./config/db');
+const { connectDB, getDbStatus } = require('./config/db');
 const User = require('./models/User');
 const authRoutes = require('./routes/authRoutes');
 const authMiddleware = require('./middleware/authMiddleware');
@@ -73,11 +73,11 @@ app.get("/protected",authMiddleware,(req,res) => {
 const mongoose = require('mongoose');
 
 app.get('/health', (req, res) => {
-    const isDbConnected = mongoose.connection.readyState === 1;
+    const db = getDbStatus();
     res.status(200).json({
         status: 'ok',
-        dbConnected: isDbConnected,
-        dbState: mongoose.connection.readyState,
+        dbConnected: db.state === 1,
+        db,
         timestamp: new Date().toISOString()
     });
 });
